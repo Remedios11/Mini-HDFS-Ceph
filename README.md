@@ -39,3 +39,19 @@ LSM-Tree 架构（写入优化）
 CRC32 数据校验
 
 LRU 缓存机制
+
+🛠️ 技术栈
+
+核心技术
+
+语言：C++17/20
+
+网络：epoll + Reactor 模式
+
+序列化：Protobuf
+
+共识协议：Raft（参考 braft）
+
+日志：spdlog
+
+测试：Google Test + Benchmark
