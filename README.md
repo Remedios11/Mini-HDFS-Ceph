@@ -1,4 +1,4 @@
-# Mini-HDFS-Ceph
+# 🚀 Mini Distributed Storage System
 
 分布式存储系统
 
