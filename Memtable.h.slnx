@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="Memtable.h/Memtable.h.vcxproj" Id="cc6b27f4-359e-4692-a6b2-ff306eb895a9" />
+</Solution>
