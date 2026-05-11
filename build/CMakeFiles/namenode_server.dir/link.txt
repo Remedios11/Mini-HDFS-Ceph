@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/namenode_server.dir/main_namenode.cpp.o -o namenode_server  libphase2_distributed.a /usr/lib/x86_64-linux-gnu/libprotobuf.so /usr/lib/x86_64-linux-gnu/libz.so -lpthread -lstdc++fs 

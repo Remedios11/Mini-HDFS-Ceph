@@ -1,0 +1,2 @@
+/usr/bin/ar qc libphase1_engine.a CMakeFiles/phase1_engine.dir/coding.cpp.o CMakeFiles/phase1_engine.dir/db_write_batch.cpp.o CMakeFiles/phase1_engine.dir/db.cpp.o CMakeFiles/phase1_engine.dir/log_reader.cpp.o CMakeFiles/phase1_engine.dir/log_writer.cpp.o CMakeFiles/phase1_engine.dir/Lrucache.cpp.o CMakeFiles/phase1_engine.dir/MemTable.cpp.o CMakeFiles/phase1_engine.dir/SSTableBuilder.cpp.o CMakeFiles/phase1_engine.dir/SSTableReader.cpp.o
+/usr/bin/ranlib libphase1_engine.a
