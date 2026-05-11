@@ -1,7 +1,0 @@
-Phase1_Engine 1 0.00801861
-ThreadPool 1 1.02794
-MetadataStore 1 0.0027986
-BlockStore 1 0.0115106
-NameNode 1 5.0104
-EndToEnd 1 5.01907
----
