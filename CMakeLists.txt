@@ -5,107 +5,120 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_compile_options(-Wall -Wextra -O2)
 
-# ===== 依赖 =====
 find_package(Protobuf REQUIRED)
 find_package(ZLIB REQUIRED)
 
 include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/engine
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/namenode
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/datanode
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/net
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/client
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/common
     ${CMAKE_CURRENT_SOURCE_DIR}/proto
+    ${CMAKE_CURRENT_SOURCE_DIR}
     ${Protobuf_INCLUDE_DIRS}
 )
 
-# ===== Phase 1：单机存储引擎 =====
-set(PHASE1_SRCS
-    coding.cpp
-    db_write_batch.cpp
-    db.cpp
-    log_reader.cpp
-    log_writer.cpp
-    Lrucache.cpp
-    MemTable.cpp
-    SSTableBuilder.cpp
-    SSTableReader.cpp
-)
-
-add_library(phase1_engine STATIC ${PHASE1_SRCS})
-target_link_libraries(phase1_engine ZLIB::ZLIB pthread stdc++fs)
-
-# ===== Phase 2：分布式层 =====
+# Proto 生成文件
 set(PROTO_SRCS
     proto/storage.pb.cc
     proto/namenode.pb.cc
     proto/datanode.pb.cc
 )
+
+# Phase 1 引擎
+set(ENGINE_SRCS
+    src/engine/coding.cpp
+    src/engine/db_write_batch.cpp
+    src/engine/db.cpp
+    src/engine/log_reader.cpp
+    src/engine/log_writer.cpp
+    src/engine/Lrucache.cpp
+    src/engine/MemTable.cpp
+    src/engine/SSTableBuilder.cpp
+    src/engine/SSTableReader.cpp
+)
+
+# 网络层
 set(NET_SRCS
-    net_thread_pool.cpp
-    net_channel.cpp
-    net_event_loop.cpp
-    net_tcp_connection.cpp
-    net_tcp_server.cpp
+    src/net/net_thread_pool.cpp
+    src/net/net_channel.cpp
+    src/net/net_event_loop.cpp
+    src/net/net_tcp_connection.cpp
+    src/net/net_tcp_server.cpp
 )
+
+# NameNode
 set(NAMENODE_SRCS
-    namenode_metadata_store.cpp
-    namenode_block_manager.cpp
-    namenode_datanode_manager.cpp
-    namenode_edit_log.cpp
-    namenode_namenode_server.cpp
-    namenode_replication_monitor.cpp
-    namenode_block_replicator.cpp
-    namenode_consistency_checker.cpp
-    namenode_fault_detector.cpp
+    src/namenode/namenode_metadata_store.cpp
+    src/namenode/namenode_block_manager.cpp
+    src/namenode/namenode_datanode_manager.cpp
+    src/namenode/namenode_edit_log.cpp
+    src/namenode/namenode_namenode_server.cpp
+    src/namenode/namenode_replication_monitor.cpp
+    src/namenode/namenode_block_replicator.cpp
+    src/namenode/namenode_consistency_checker.cpp
+    src/namenode/namenode_fault_detector.cpp
 )
+
+# DataNode
 set(DATANODE_SRCS
-    datanode_block_store.cpp
-    datanode_pipeline_handler.cpp
-    datanode_datanode_client.cpp
-    datanode_datanode_server.cpp
+    src/datanode/datanode_block_store.cpp
+    src/datanode/datanode_pipeline_handler.cpp
+    src/datanode/datanode_datanode_client.cpp
+    src/datanode/datanode_datanode_server.cpp
 )
+
+# 静态库
+add_library(phase1_engine STATIC ${ENGINE_SRCS})
+target_link_libraries(phase1_engine ZLIB::ZLIB pthread stdc++fs)
 
 add_library(phase2_distributed STATIC
     ${PROTO_SRCS} ${NET_SRCS} ${NAMENODE_SRCS} ${DATANODE_SRCS}
-    client_storage_client.cpp
+    src/client/client_storage_client.cpp
 )
 target_link_libraries(phase2_distributed
     ${Protobuf_LIBRARIES} ZLIB::ZLIB pthread stdc++fs)
 
-# ===== 可执行文件 =====
-add_executable(namenode_server main_namenode.cpp)
+# 可执行文件
+add_executable(namenode_server src/main_namenode.cpp)
 target_link_libraries(namenode_server phase2_distributed)
 
-add_executable(datanode_server main_datanode.cpp)
+add_executable(datanode_server src/main_datanode.cpp)
 target_link_libraries(datanode_server phase2_distributed)
 
-# ===== 测试 =====
+# 测试
 enable_testing()
 
-add_executable(test_phase1 test_phase1.cpp)
+add_executable(test_phase1 tests/test_phase1.cpp)
 target_link_libraries(test_phase1 phase1_engine)
 add_test(NAME Phase1_Engine COMMAND test_phase1)
 
-add_executable(test_thread_pool test_thread_pool.cpp)
+add_executable(test_thread_pool tests/test_thread_pool.cpp)
 target_link_libraries(test_thread_pool phase2_distributed)
 add_test(NAME ThreadPool COMMAND test_thread_pool)
 
-add_executable(test_metadata_store test_metadata_store.cpp)
+add_executable(test_metadata_store tests/test_metadata_store.cpp)
 target_link_libraries(test_metadata_store phase2_distributed)
 add_test(NAME MetadataStore COMMAND test_metadata_store)
 
-add_executable(test_block_store test_block_store.cpp)
+add_executable(test_block_store tests/test_block_store.cpp)
 target_link_libraries(test_block_store phase2_distributed)
 add_test(NAME BlockStore COMMAND test_block_store)
 
-add_executable(test_namenode test_namenode.cpp)
+add_executable(test_namenode tests/test_namenode.cpp)
 target_link_libraries(test_namenode phase2_distributed)
 add_test(NAME NameNode COMMAND test_namenode)
 set_tests_properties(NameNode PROPERTIES TIMEOUT 30)
 
-add_executable(test_end_to_end test_end_to_end.cpp)
+add_executable(test_end_to_end tests/test_end_to_end.cpp)
 target_link_libraries(test_end_to_end phase2_distributed)
 add_test(NAME EndToEnd COMMAND test_end_to_end)
 set_tests_properties(EndToEnd PROPERTIES TIMEOUT 60)
 
-add_executable(test_week8 test_week8_fault_tolerance.cpp)
+add_executable(test_week8 tests/test_week8_fault_tolerance.cpp)
 target_link_libraries(test_week8 phase2_distributed)
 add_test(NAME Week8_FaultTolerance COMMAND test_week8)
 set_tests_properties(Week8_FaultTolerance PROPERTIES TIMEOUT 120)
