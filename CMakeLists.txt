@@ -26,6 +26,7 @@ set(PROTO_SRCS
     proto/storage.pb.cc
     proto/namenode.pb.cc
     proto/datanode.pb.cc
+    proto/raft.pb.cc
 )
 
 # Phase 1 引擎
@@ -71,6 +72,17 @@ set(DATANODE_SRCS
     src/datanode/datanode_datanode_server.cpp
 )
 
+# Raft (Phase 3)
+set(RAFT_SRCS
+    src/raft/raft_node.cpp
+    src/raft/raft_rpc.cpp
+)
+
+# HA NameNode (Phase 3)
+set(HA_NAMENODE_SRCS
+    src/namenode/namenode_ha_server.cpp
+)
+
 # 静态库
 add_library(phase1_engine STATIC ${ENGINE_SRCS})
 target_link_libraries(phase1_engine ZLIB::ZLIB pthread stdc++fs)
@@ -81,6 +93,23 @@ add_library(phase2_distributed STATIC
 )
 target_link_libraries(phase2_distributed
     ${Protobuf_LIBRARIES} ZLIB::ZLIB pthread stdc++fs)
+
+# Phase 3 Raft library
+add_library(phase3_raft STATIC
+    ${RAFT_SRCS}
+)
+target_link_libraries(phase3_raft
+    ${Protobuf_LIBRARIES} pthread)
+target_include_directories(phase3_raft PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/proto)
+
+# Phase 3 HA NameNode library (depends on raft + phase2)
+add_library(phase3_ha_namenode STATIC
+    ${HA_NAMENODE_SRCS}
+)
+target_link_libraries(phase3_ha_namenode
+    phase3_raft phase2_distributed)
 
 # 可执行文件
 add_executable(namenode_server src/main_namenode.cpp)
@@ -122,3 +151,15 @@ add_executable(test_week8 tests/test_week8_fault_tolerance.cpp)
 target_link_libraries(test_week8 phase2_distributed)
 add_test(NAME Week8_FaultTolerance COMMAND test_week8)
 set_tests_properties(Week8_FaultTolerance PROPERTIES TIMEOUT 120)
+
+# Phase 3: HA NameNode executable
+add_executable(namenode_ha
+    src/main_namenode_ha.cpp
+)
+target_link_libraries(namenode_ha phase3_ha_namenode phase3_raft phase2_distributed)
+
+# Phase 3: Raft & HA tests
+add_executable(test_phase3_raft tests/test_phase3_raft.cpp)
+target_link_libraries(test_phase3_raft phase3_ha_namenode phase3_raft phase2_distributed)
+add_test(NAME Phase3_RaftHA COMMAND test_phase3_raft)
+set_tests_properties(Phase3_RaftHA PROPERTIES TIMEOUT 180)
