@@ -163,3 +163,9 @@ add_executable(test_phase3_raft tests/test_phase3_raft.cpp)
 target_link_libraries(test_phase3_raft phase3_ha_namenode phase3_raft phase2_distributed)
 add_test(NAME Phase3_RaftHA COMMAND test_phase3_raft)
 set_tests_properties(Phase3_RaftHA PROPERTIES TIMEOUT 180)
+
+# Phase 3: Raft stress tests
+add_executable(test_raft_stress tests/test_raft_stress.cpp)
+target_link_libraries(test_raft_stress phase3_ha_namenode phase3_raft phase2_distributed)
+add_test(NAME RaftStress COMMAND test_raft_stress)
+set_tests_properties(RaftStress PROPERTIES TIMEOUT 300)
