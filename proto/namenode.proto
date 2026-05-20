@@ -1,0 +1,114 @@
+syntax = "proto3";
+package mini_storage;
+
+message CreateFileRequest {
+    string path = 1;
+}
+
+message AllocateBlockRequest {
+    string file_path = 1;
+}
+
+message AllocateBlockResponse {
+    bool   success    = 1;
+    uint64 block_id   = 2;
+    repeated string datanode_addresses = 3;
+    string error      = 4;
+}
+
+message GetFileBlocksRequest {
+    string path = 1;
+}
+
+message GetFileBlocksResponse {
+    bool    success   = 1;
+    string  path      = 2;
+    int64   size      = 3;
+    message BlockLocation {
+        uint64          block_id   = 1;
+        int64           size       = 2;
+        repeated string datanodes  = 3;
+    }
+    repeated BlockLocation blocks = 4;
+    string error = 5;
+}
+
+message DeleteFileRequest {
+    string path = 1;
+}
+
+message ListFilesRequest {
+    string dir = 1;
+}
+
+message ListFilesResponse {
+    bool success = 1;
+    message FileSummary {
+        string path        = 1;
+        int64  size        = 2;
+        int64  create_time = 3;
+        int32  block_count = 4;
+    }
+    repeated FileSummary files = 2;
+}
+
+message RegisterDataNodeRequest {
+    string datanode_id = 1;
+    string host        = 2;
+    int32  port        = 3;
+    int64  free_space  = 4;
+}
+
+message HeartbeatRequest {
+    string datanode_id = 1;
+    int64  timestamp   = 2;
+    int64  free_space  = 3;
+    int32  block_count = 4;
+}
+
+// Block report messages (added in Week 7)
+message BlockReportItem {
+    uint64 block_id = 1;
+    int64  size     = 2;
+    uint32 crc32    = 3;
+}
+
+message BlockReportRequest {
+    string datanode_id = 1;
+    repeated BlockReportItem blocks = 2;
+}
+
+message NameNodeRequest {
+    enum OpType {
+        CREATE_FILE      = 0;
+        ALLOCATE_BLOCK   = 1;
+        GET_FILE_BLOCKS  = 2;
+        DELETE_FILE      = 3;
+        LIST_FILES       = 4;
+        REGISTER_DN      = 5;
+        HEARTBEAT        = 6;
+        BLOCK_REPORT     = 8;
+    }
+    OpType op         = 1;
+    uint64 request_id = 2;
+
+    CreateFileRequest     create_file      = 10;
+    AllocateBlockRequest  allocate_block   = 11;
+    GetFileBlocksRequest  get_file_blocks  = 12;
+    DeleteFileRequest     delete_file      = 13;
+    ListFilesRequest      list_files       = 14;
+    RegisterDataNodeRequest register_dn    = 15;
+    HeartbeatRequest      heartbeat        = 16;
+    BlockReportRequest    block_report     = 18;
+}
+
+message NameNodeResponse {
+    uint64 request_id = 1;
+    bool   success    = 2;
+    string error      = 3;
+
+    // create_file response is inline (just success/error at top level)
+    AllocateBlockResponse  allocate_block   = 11;
+    GetFileBlocksResponse  get_file_blocks  = 12;
+    ListFilesResponse      list_files       = 14;
+}

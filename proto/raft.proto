@@ -1,0 +1,102 @@
+syntax = "proto3";
+package mini_storage;
+
+// A single entry in the Raft log
+message RaftLogEntry {
+    uint64 term    = 1;
+    uint64 index   = 2;
+    bytes  command = 3;  // Serialized NameNodeRequest
+}
+
+// ---- RequestVote RPC ----
+
+message RequestVoteRequest {
+    uint64 term           = 1;
+    string candidate_id   = 2;
+    uint64 last_log_index = 3;
+    uint64 last_log_term  = 4;
+}
+
+message RequestVoteResponse {
+    uint64 term         = 1;
+    bool   vote_granted = 2;
+}
+
+// ---- AppendEntries RPC ----
+
+message AppendEntriesRequest {
+    uint64 term              = 1;
+    string leader_id         = 2;
+    uint64 prev_log_index    = 3;
+    uint64 prev_log_term     = 4;
+    repeated RaftLogEntry entries = 5;
+    uint64 leader_commit     = 6;
+}
+
+message AppendEntriesResponse {
+    uint64 term        = 1;
+    bool   success     = 2;
+    uint64 match_index = 3;  // For fast log backtracking
+}
+
+// ---- InstallSnapshot RPC ----
+
+message InstallSnapshotRequest {
+    uint64 term                 = 1;
+    string leader_id            = 2;
+    uint64 last_included_index  = 3;
+    uint64 last_included_term   = 4;
+    bytes  snapshot_data        = 5;
+}
+
+message InstallSnapshotResponse {
+    uint64 term    = 1;
+    bool   success = 2;
+}
+
+// ---- Snapshot data (stored in snapshot file) ----
+
+message SnapshotMetadata {
+    uint64 last_included_index = 1;
+    uint64 last_included_term  = 2;
+    bytes  metadata_store_data = 3;  // Serialized MetadataStoreSnapshot
+}
+
+// Serializable form of MetadataStore state for snapshots
+message MetadataStoreSnapshot {
+    message FileEntry {
+        string path            = 1;
+        int64  size            = 2;
+        int64  create_time     = 3;
+        int64  modify_time     = 4;
+        repeated uint64 blocks = 5;
+    }
+    message BlockEntry {
+        uint64 block_id          = 1;
+        int64  size              = 2;
+        repeated string locations = 3;
+    }
+    repeated FileEntry  files  = 1;
+    repeated BlockEntry blocks = 2;
+}
+
+// ---- Top-level Raft message wrapper ----
+
+message RaftMessage {
+    enum Type {
+        REQUEST_VOTE           = 0;
+        REQUEST_VOTE_RESPONSE  = 1;
+        APPEND_ENTRIES         = 2;
+        APPEND_ENTRIES_RESPONSE = 3;
+        INSTALL_SNAPSHOT       = 4;
+        INSTALL_SNAPSHOT_RESPONSE = 5;
+    }
+    Type type = 1;
+
+    RequestVoteRequest      request_vote           = 10;
+    RequestVoteResponse     request_vote_response   = 11;
+    AppendEntriesRequest    append_entries          = 12;
+    AppendEntriesResponse   append_entries_response = 13;
+    InstallSnapshotRequest  install_snapshot        = 14;
+    InstallSnapshotResponse install_snapshot_response = 15;
+}

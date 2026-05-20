@@ -1,0 +1,21 @@
+syntax = "proto3";
+package mini_storage;
+
+message Request {
+    enum OpType {
+        PUT    = 0;
+        GET    = 1;
+        DELETE = 2;
+    }
+    uint64 request_id = 1;
+    OpType op         = 2;
+    string key        = 3;
+    string value      = 4;
+}
+
+message Response {
+    uint64 request_id = 1;
+    bool   success    = 2;
+    string value      = 3;
+    string error_msg  = 4;
+}
